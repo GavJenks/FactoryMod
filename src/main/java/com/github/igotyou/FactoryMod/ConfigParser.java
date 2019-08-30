@@ -34,6 +34,7 @@ import com.github.igotyou.FactoryMod.recipes.PrintBookRecipe;
 import com.github.igotyou.FactoryMod.recipes.PrintNoteRecipe;
 import com.github.igotyou.FactoryMod.recipes.PrintingPlateRecipe;
 import com.github.igotyou.FactoryMod.recipes.ProductionRecipe;
+import com.github.igotyou.FactoryMod.recipes.ProductionAndRepairRecipe;
 import com.github.igotyou.FactoryMod.recipes.PylonRecipe;
 import com.github.igotyou.FactoryMod.recipes.RandomOutputRecipe;
 import com.github.igotyou.FactoryMod.recipes.RecipeScalingUpgradeRecipe;
@@ -560,6 +561,39 @@ public class ConfigParser {
 			input = parseItemMap(inputSection);
 		}
 		switch (type) {
+                case "PRODUCTION_AND_REPAIR":
+                        ConfigurationSection outputSection = config.getConfigurationSection("output");
+			ItemMap output;
+			ItemStack recipeRepresentation;
+			if (outputSection == null) {
+				if (!(parentRecipe instanceof ProductionRecipe)) {
+					output = new ItemMap();
+					recipeRepresentation = null;
+				}
+				else {
+					output = ((ProductionRecipe) parentRecipe).getOutput();
+					recipeRepresentation = ((ProductionRecipe) parentRecipe).getRecipeRepresentation();
+				}
+			}
+			else {
+				output = parseItemMap(outputSection);
+				recipeRepresentation = parseFirstItem(outputSection);
+			}
+			ProductionRecipeModifier modi = parseProductionRecipeModifier(config.getConfigurationSection("modi"));
+			if (modi == null && parentRecipe instanceof ProductionRecipe) {
+				modi = ((ProductionRecipe) parentRecipe).getModifier().clone();
+			}
+			result = new ProductionRecipe(identifier, name, productionTime, input, output, recipeRepresentation, modi);
+                        ---------
+                        //raw dump of both, need to review and merge
+                        ---------
+                        int health = config.getInt("health_gained", 
+					(parentRecipe instanceof RepairRecipe) ? ((RepairRecipe)parentRecipe).getHealth() : 0);
+			if (health == 0) {
+				plugin.warning("Health gained from repair recipe " + name + " is set to or was defaulted to 0, this might not be what was intended");
+			}
+			result = new RepairRecipe(identifier, name, productionTime, input, health);
+			break;
 		case "PRODUCTION":
 			ConfigurationSection outputSection = config.getConfigurationSection("output");
 			ItemMap output;
